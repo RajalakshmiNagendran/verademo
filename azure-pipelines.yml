@@ -29,7 +29,7 @@ steps:
 # Publish (upload) a file or directory as a named artifact for the current run.
 - task: PublishPipelineArtifact@1
   inputs:
-    targetPath: '$(Pipeline.Workspace)/$(Build.BuildId).zip'
+    targetPath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
     publishLocation: 'pipeline'
 
 # Download build and pipeline artifacts.
