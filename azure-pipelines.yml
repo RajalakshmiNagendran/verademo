@@ -26,17 +26,17 @@ steps:
     archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
     replaceExistingArchive: true
 
+# Publish (upload) a file or directory as a named artifact for the current run.
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Pipeline.Workspace)'
+    publishLocation: 'pipeline'
+
 # Download build and pipeline artifacts.
 - task: DownloadPipelineArtifact@2
   inputs:
     buildType: 'current'
-    targetPath: '$(Pipeline.Workspace)/$(Build.BuildId).zip'
-
-# Publish (upload) a file or directory as a named artifact for the current run.
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: '$(Pipeline.Workspace)/$(Build.BuildId).zip'
-    publishLocation: 'pipeline'
+    targetPath: '$(Pipeline.Workspace)'
 
 # Step 5: Scan the ZIP File with Veracode
 - task: CmdLine@2
