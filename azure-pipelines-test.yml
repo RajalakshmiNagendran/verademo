@@ -3,7 +3,7 @@ trigger:
 
 pool:
   name: 'azureagent'
-/verademo-test
+  
 steps:
 - task: CmdLine@2
   displayName: Veracode Pipeline Scan
