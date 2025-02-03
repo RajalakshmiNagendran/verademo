@@ -1,0 +1,14 @@
+trigger:
+- main
+
+pool:
+  name: 'azureagent'
+/verademo-test
+steps:
+- task: CmdLine@2
+  displayName: Veracode Pipeline Scan
+  inputs:
+    script: |
+      curl -sSO https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
+      unzip -o pipeline-scan-LATEST.zip
+      java -jar pipeline-scan.jar -vid $(myVeracodeId) -vkey $(myVeracodeSecret) -f /home/divya/verademo-test/verademo.war
