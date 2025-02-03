@@ -1,31 +1,48 @@
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
-# This is an example of using VeraDemo Java test application with the Veracode Static Pipeline scanner.  A Veracode subscription is required.
 trigger:
 - main
+
 pool:
-  vmImage: 'ubuntu-latest'
+  name: 'azureagent'
+
 steps:
-- task: Maven@3
-  displayName: Build with Maven
+# Step 1: Package Binaries
+- task: CmdLine@2
+  displayName: Package Artifacts
   inputs:
-    mavenPomFile: 'app/pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.8'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'package'
-- task: Bash@3
-  displayName: Veracode Pipeline
+    script: |
+      curl -fsS https://tools.veracode.com/veracode-cli/install | sh
+      ./veracode package --source $(Build.SourcesDirectory) --output $(Build.ArtifactStagingDirectory)/artifacts --trust
+  env: 
+      VERACODE_API_KEY_ID: $(myVeracodeId)
+      VERACODE_API_KEY_SECRET: $(myVeracodeSecret)
+
+# Step 2: Archive Packaged Binaries
+- task: ArchiveFiles@2
+  displayName: Archive Packaged Binaries
   inputs:
-    targetType: 'inline'
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/artifacts'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
+
+# Download build and pipeline artifacts.
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: 'current'
+    targetPath: '$(Pipeline.Workspace)'
+
+# Publish (upload) a file or directory as a named artifact for the current run.
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Pipeline.Workspace)'
+    publishLocation: 'pipeline'
+
+# Step 5: Scan the ZIP File with Veracode
+- task: CmdLine@2
+  displayName: Veracode Pipeline Scan
+  inputs:
     script: |
       curl -sSO https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
       unzip -o pipeline-scan-LATEST.zip
-      java -jar pipeline-scan.jar -vid $(VERACODE_API_ID) -vkey $(VERACODE_API_KEY) -f /home/vsts/work/1/s/app/target/verademo.war || true
-- publish: $(System.DefaultWorkingDirectory)/results.json
-  artifact: VeracodeBaseline
+      java -jar pipeline-scan.jar -vid $(myVeracodeId) -vkey $(myVeracodeSecret) -f $(Pipeline.Workspace)/$(Build.BuildId).zip
