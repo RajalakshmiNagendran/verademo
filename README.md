@@ -1,3 +1,4 @@
+This sample project has taken for executing Pipeline Scan.
 # VeraDemo - Blab-a-Gag
 
 ### :information_source: Notice
